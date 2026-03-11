@@ -83,67 +83,7 @@ export async function fetchLiabilities() {
 
 // 获取完整的 Dashboard 数据
 export async function fetchDashboardData() {
-  // 临时假数据，用于修复移动端显示
-  console.log('使用临时假数据，等待 Supabase 表创建完成')
-  
-  const mockData = {
-    summary: {
-      netWorth: 2180145,
-      totalAssets: 2372145,
-      totalLiabilities: 192000,
-      leverageRatio: 8.8,
-      monthlyChange: 58320,
-      monthlyChangePct: 2.75
-    },
-    cashFlow: {
-      totalIncome: 290000,
-      totalExpenses: 45800,
-      netCashFlow: 244200,
-      savingsRate: 84.2,
-      topCategories: [
-        { name: '工资', amount: 250000 },
-        { name: '投资收益', amount: 40000 },
-        { name: '生活消费', amount: 28000 },
-        { name: '房租', amount: 12000 }
-      ]
-    },
-    returns: {
-      totalReturn: 158420,
-      aShareReturn: 85300,
-      usStockReturn: 73120,
-      aShareValue: 1180000,
-      usStockValue: 850000
-    },
-    insights: [
-      {
-        id: 'leverage',
-        title: '杠杆率',
-        value: '8.8%',
-        description: '安全',
-        trend: 'down',
-        type: 'success' as 'success'
-      },
-      {
-        id: 'savings',
-        title: '月储蓄率',
-        value: '84.2%',
-        description: '优秀',
-        trend: 'up',
-        type: 'success' as 'success'
-      },
-      {
-        id: 'returns',
-        title: '持仓收益',
-        value: '+158,420',
-        description: '盈利中',
-        trend: 'up',
-        type: 'success' as 'success'
-      }
-    ],
-    lastUpdated: new Date().toISOString()
-  }
-  
-  return mockData
+  console.log('获取真实 Supabase 数据...')
   
   const [netWorth, cashflow, portfolio, liabilities] = await Promise.all([
     fetchLatestNetWorth(),

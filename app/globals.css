@@ -224,82 +224,131 @@ body {
 /* Mobile Responsive Design */
 @media (max-width: 768px) {
   .display {
-    font-size: 3rem;
-    margin: 0;
+    font-size: 3rem !important;
+    margin: 0 !important;
   }
   
   .headline {
-    font-size: 2rem;
+    font-size: 2rem !important;
   }
   
   .title {
-    font-size: 1.25rem;
+    font-size: 1.25rem !important;
   }
   
-  /* Mobile Header Fix */
-  .mobile-header {
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 50;
-    border-bottom: 1px solid var(--border);
-    padding: 12px 0;
+  /* Fix mobile container padding */
+  main .container {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
   }
   
-  /* Mobile Layout */
-  .container {
-    padding: 16px !important;
-    max-width: 100% !important;
-  }
-  
-  /* Mobile Grid */
-  .grid {
+  /* Mobile Grid - force single column */
+  .grid.grid-cols-1.gap-6.lg\\:grid-cols-3 {
     grid-template-columns: 1fr !important;
     gap: 16px !important;
   }
   
-  /* Mobile Cards */
-  .insight {
+  /* Mobile Cards - better spacing */
+  .insight,
+  .card {
     padding: 16px !important;
-    margin: 8px 0;
+    margin-bottom: 16px !important;
   }
   
-  /* Mobile Data Row */
+  /* Mobile Data Row - more compact */
   .data-row {
-    padding: 12px 0;
+    padding: 14px 0 !important;
   }
   
-  /* Mobile Typography */
+  /* Mobile Typography - readable sizes */
   .body {
-    font-size: 0.875rem;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
   }
   
   .caption {
-    font-size: 0.75rem;
+    font-size: 0.75rem !important;
   }
   
-  /* Mobile Header Layout */
+  .overline {
+    font-size: 0.625rem !important;
+  }
+  
+  /* Mobile Header - stack vertically */
   .header-flex {
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 8px !important;
+    gap: 12px !important;
   }
   
   .user-info {
     align-self: flex-end !important;
   }
+  
+  /* Mobile Insights Grid - adjust for small screens */
+  .grid.grid-cols-3.gap-4 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  
+  .insight.text-center {
+    padding: 20px 16px !important;
+  }
+  
+  /* Mobile Net Worth Display */
+  .display[style*="background"] {
+    font-size: 2.5rem !important;
+    line-height: 1.1 !important;
+  }
+  
+  /* Mobile Bar Charts */
+  .bar {
+    height: 4px !important;
+  }
 }
 
+/* Extra small screens */
 @media (max-width: 480px) {
   .display {
-    font-size: 2.5rem;
+    font-size: 2.2rem !important;
   }
   
-  .container {
-    padding: 12px !important;
+  main .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
   }
   
-  .insight {
-    padding: 12px !important;
+  .insight,
+  .card {
+    padding: 14px !important;
+  }
+  
+  .display[style*="background"] {
+    font-size: 2rem !important;
+  }
+  
+  /* Very small insight cards */
+  .insight.text-center {
+    padding: 16px 12px !important;
+  }
+  
+  .headline {
+    font-size: 1.75rem !important;
+  }
+}
+
+/* Fix specific layout issues */
+@media (max-width: 768px) {
+  /* Ensure full width on mobile */
+  .min-h-screen {
+    width: 100vw !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Fix header spacing */
+  .sticky.top-0 {
+    position: sticky !important;
+    top: 0 !important;
   }
 }
