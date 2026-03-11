@@ -10,15 +10,15 @@ export default async function Home() {
 
   if (!financeData) {
     return (
-      <div className="min-h-screen bg-[var(--bg-1)] text-[var(--text-1)] transition-colors duration-300">
-        <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-1)]/80 backdrop-blur-sm">
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--text-1)] transition-colors duration-300">
+        <header className="mobile-header sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-sm">
           <div className="container mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
+            <div className="header-flex flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)]"></div>
+                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--up)]"></div>
                 <h1 className="text-xl font-medium tracking-tight">Jarvis Finance</h1>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="user-info flex items-center gap-4">
                 <ThemeToggle />
                 <div className="text-sm text-[var(--text-2)]">王总 · 27岁</div>
               </div>
@@ -36,15 +36,15 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-1)] text-[var(--text-1)] transition-colors duration-300">
-      <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-1)]/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text-1)] transition-colors duration-300">
+      <header className="mobile-header sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+          <div className="header-flex flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--primary)] to-[var(--primary-light)]"></div>
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[var(--accent)] to-[var(--up)]"></div>
               <h1 className="text-xl font-medium tracking-tight">Jarvis Finance</h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="user-info flex items-center gap-4">
               <ThemeToggle />
               <div className="text-sm text-[var(--text-2)]">王总 · 27岁</div>
             </div>

@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-03-11T17:39:02.629772",
+  "count": 2,
+  "emails": [
+    {
+      "subject": "Comparing different models with the same prompt",
+      "from": "OpenRouter Team <welcome@openrouter.ai>",
+      "date": "Wed, 11 Mar 2026 08:47:13 +0000",
+      "matched_keywords": [
+        "code"
+      ],
+      "snippet": "OpenRouter\r\n\r\nOpenRouter ( https://openrouter.ai/?utm_campaign=Welcome+Email+Campaign+%232&utm_content=ModelDiscovery-email&utm_medium=email_action&utm_source=customer.io )\r\n\r\nHi wang,\r\n\r\nPicking the ..."
+    },
+    {
+      "subject": "Alert: Your Account Balance Below 1000000 Credits!",
+      "from": "Kaito <hello@twitterapi.io>",
+      "date": "Wed, 11 Mar 2026 09:02:34 +0000",
+      "matched_keywords": [
+        "验证码模式"
+      ],
+      "snippet": "LOW BALANCE ALERT\r\n\r\nHello,\r\n\r\nYour account balance is now below 1000000 credits (equivalent to 10.00 USD). Please top up your account soon to ensure uninterrupted service.\r\n\r\n\r\n💳 HOW TO TOP UP YOUR A..."
+    }
+  ]
+}
