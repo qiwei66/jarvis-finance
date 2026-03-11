@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import Link from 'next/link'
 import './globals.css'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -41,10 +42,10 @@ export default function RootLayout({
                 
                 {/* Navigation */}
                 <nav className="flex gap-7">
-                  <span className="nav-item active">概览</span>
-                  <span className="nav-item">持仓</span>
-                  <span className="nav-item">收支</span>
-                  <span className="nav-item">负债</span>
+                  <Link href="/" className="nav-item">概览</Link>
+                  <Link href="/portfolio" className="nav-item">持仓</Link>
+                  <Link href="/cashflow" className="nav-item">收支</Link>
+                  <Link href="/debt" className="nav-item">负债</Link>
                 </nav>
               </div>
               
