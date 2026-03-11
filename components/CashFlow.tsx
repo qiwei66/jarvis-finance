@@ -51,7 +51,7 @@ export function CashFlow({ data }: CashFlowProps) {
           {isPositive ? '正向' : '负向'}
         </span>
         <span className="badge">
-          储蓄率 {savingsRate.toFixed(1)}%
+          储蓄率 {(savingsRate || 0).toFixed(1)}%
         </span>
       </div>
 
@@ -81,7 +81,7 @@ export function CashFlow({ data }: CashFlowProps) {
               <div key={idx} className="flex justify-between items-center">
                 <span className="body">{cat.category}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-[var(--text-2)]">{cat.pct.toFixed(1)}%</span>
+                  <span className="text-sm text-[var(--text-2)]">{(cat.pct || 0).toFixed(1)}%</span>
                   <span className="text-sm font-medium text-[var(--text-1)]">
                     {formatCurrency(cat.amount)}
                   </span>

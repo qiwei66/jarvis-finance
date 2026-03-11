@@ -45,7 +45,7 @@ export function Returns({ data }: ReturnsProps) {
   const chartOption = createReturnsChartOption(returnsData)
 
   // 计算 A 股杠杆率
-  const aShareLeverage = aShareValue > 0 ? ((aShareValue + 1920000) / aShareValue * 100).toFixed(1) + '%' : '0%'
+  const aShareLeverage = (aShareValue && aShareValue > 0) ? ((aShareValue + 1920000) / aShareValue * 100).toFixed(1) + '%' : '0%'
 
   return (
     <section className="card">

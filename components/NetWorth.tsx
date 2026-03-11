@@ -75,7 +75,7 @@ export function NetWorth({ data }: NetWorthProps) {
         <span className="overline">NET WORTH · 净资产</span>
         <div className="flex gap-2">
           <span className={`badge ${monthlyChangePct > 0 ? 'badge-up' : 'badge-down'}`}>
-            {monthlyChangePct > 0 ? '↑' : '↓'} {Math.abs(monthlyChangePct).toFixed(2)}%
+            {monthlyChangePct > 0 ? '↑' : '↓'} {Math.abs(monthlyChangePct || 0).toFixed(2)}%
           </span>
           <span className="badge">
             本月 {monthlyChange > 0 ? '+' : ''}{formatCurrency(monthlyChange / 10000)}万
@@ -103,7 +103,7 @@ export function NetWorth({ data }: NetWorthProps) {
         <div className="flex justify-between items-center mb-2">
           <span className="caption">距 ¥200 万目标</span>
           <span className="text-[0.8125rem] font-medium text-[var(--accent)]">
-            {milestone.progressPercent.toFixed(1)}%
+            {(milestone.progressPercent || 0).toFixed(1)}%
           </span>
         </div>
         
@@ -141,7 +141,7 @@ export function NetWorth({ data }: NetWorthProps) {
         </span>
         <span>
           杠杆 <span className="text-[var(--down)] font-medium">
-            {leverageRatio.toFixed(1)}%
+            {(leverageRatio || 0).toFixed(1)}%
           </span>
         </span>
       </div>
