@@ -1,0 +1,42 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-stock",
+      "schedule": "*/5 9-15 * * 1-5"
+    },
+    {
+      "path": "/api/cron/monitor-email",
+      "schedule": "*/10 * * * *"
+    }
+  ],
+  "functions": {
+    "app/api/cron/sync-stock/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/cron/monitor-email/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/portfolio/route.ts": {
+      "maxDuration": 15
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ]
+}
