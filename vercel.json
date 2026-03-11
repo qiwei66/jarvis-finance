@@ -1,40 +1,28 @@
 {
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/sync-stock",
-      "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/monitor-email",
-      "schedule": "0 9 * * *"
+      "schedule": "0 16 * * 1-5"
     }
   ],
-  "functions": {
-    "app/api/cron/sync-stock/route.ts": {
-      "maxDuration": 30
-    },
-    "app/api/cron/monitor-email/route.ts": {
-      "maxDuration": 30
-    },
-    "app/api/portfolio/route.ts": {
-      "maxDuration": 15
+  "redirects": [
+    {
+      "source": "/health",
+      "destination": "/api/portfolio"
     }
-  },
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
         {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization"
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
