@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/sync-stock",
-      "schedule": "*/5 9-15 * * 1-5"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/monitor-email",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 9 * * *"
     }
   ],
   "functions": {
