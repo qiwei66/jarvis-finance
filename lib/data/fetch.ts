@@ -1,9 +1,9 @@
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import { calculateNetWorth, calculateLeverageRatio, calculateSavingsRate } from '@/lib/calc'
 
 // 获取最新净资产数据
 export async function fetchLatestNetWorth() {
-  const { data, error } = await getSupabase()
+  const { data, error } = await getSupabaseAdmin()
     .from('net_worth_daily')
     .select('*')
     .order('date', { ascending: false })
@@ -20,7 +20,7 @@ export async function fetchLatestNetWorth() {
 
 // 获取月度现金流数据
 export async function fetchMonthlyCashflow() {
-  const { data, error } = await getSupabase()
+  const { data, error } = await getSupabaseAdmin()
     .from('monthly_cashflow')
     .select('*')
     .order('month', { ascending: false })
@@ -37,17 +37,27 @@ export async function fetchMonthlyCashflow() {
 
 // 获取持仓汇总数据
 export async function fetchPortfolioSummary() {
-  const { data: aShareData, error: aShareError } = await getSupabase()
+  // 先获取最新日期
+  const { data: latestDate } = await getSupabaseAdmin()
+    .from('portfolio_snapshots')
+    .select('date')
+    .order('date', { ascending: false })
+    .limit(1)
+    .single()
+  
+  const queryDate = latestDate?.date || new Date().toISOString().split('T')[0]
+
+  const { data: aShareData, error: aShareError } = await getSupabaseAdmin()
     .from('portfolio_snapshots')
     .select('market_value, pnl')
     .eq('market', 'a_share')
-    .eq('date', new Date().toISOString().split('T')[0])
+    .eq('date', queryDate)
 
-  const { data: usStockData, error: usStockError } = await getSupabase()
+  const { data: usStockData, error: usStockError } = await getSupabaseAdmin()
     .from('portfolio_snapshots')
     .select('market_value, pnl')
     .eq('market', 'us_stock')
-    .eq('date', new Date().toISOString().split('T')[0])
+    .eq('date', queryDate)
 
   if (aShareError || usStockError) {
     console.error('Failed to fetch portfolio:', aShareError || usStockError)
@@ -69,7 +79,7 @@ export async function fetchPortfolioSummary() {
 
 // 获取负债数据
 export async function fetchLiabilities() {
-  const { data, error } = await getSupabase()
+  const { data, error } = await getSupabaseAdmin()
     .from('liabilities')
     .select('*')
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import { fetchAllHoldings } from '@/lib/data/sina'
 
 export const dynamic = 'force-dynamic'
@@ -10,10 +10,20 @@ export async function GET() {
     // 获取最新持仓快照（真实数据）
     console.log('Portfolio API: 获取真实 Supabase 数据')
     
-    const { data: portfolioSnapshots, error } = await getSupabase()
+    // 获取最新日期的数据
+    const { data: latestDate } = await getSupabaseAdmin()
+      .from('portfolio_snapshots')
+      .select('date')
+      .order('date', { ascending: false })
+      .limit(1)
+      .single()
+    
+    const queryDate = latestDate?.date || new Date().toISOString().split('T')[0]
+    
+    const { data: portfolioSnapshots, error } = await getSupabaseAdmin()
       .from('portfolio_snapshots')
       .select('*')
-      .eq('date', '2026-03-08')  // 使用我们有数据的日期
+      .eq('date', queryDate)
       .order('market', { ascending: true })
 
     if (error) {
@@ -79,7 +89,7 @@ export async function POST() {
       const market = stock.code.startsWith('gb_') ? 'us_stock' : 'a_share'
       
       // 获取当前持仓信息
-      const { data: existingHolding } = await getSupabase()
+      const { data: existingHolding } = await getSupabaseAdmin()
         .from('portfolio_snapshots')
         .select('*')
         .eq('date', today)
@@ -96,7 +106,7 @@ export async function POST() {
         const pnlPct = costPrice > 0 ? (pnl / (shares * costPrice)) * 100 : 0
 
         // 更新持仓数据
-        const { error } = await getSupabase()
+        const { error } = await getSupabaseAdmin()
           .from('portfolio_snapshots')
           .update({
             market_price: stock.currentPrice,
