@@ -16,11 +16,11 @@ export async function GET(request: Request) {
       const monthStart = `${month}-01`
       query = query.eq('month', monthStart)
     } else {
-      // 查询最近6个月
+      // 查询最近12个月，确保覆盖范围足够
       query = query
-        .gte('month', new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
+        .gte('month', '2025-01-01') // 固定从2025年开始，避免日期计算问题
         .order('month', { ascending: false })
-        .limit(6)
+        .limit(12)
     }
 
     const { data: cashflowData, error } = await query
