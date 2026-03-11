@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
-import { fetchAllHoldings } from '@/lib/data/sina'
+import { fetchAllHoldings } from '@/lib/data/multi-source'
 
 // 验证 cron 密钥（从环境变量读取）
 const CRON_SECRET = process.env.CRON_SECRET

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase'
-import { fetchAllHoldings } from '@/lib/data/sina'
+import { fetchAllHoldings } from '@/lib/data/multi-source'
 
 export const dynamic = 'force-dynamic'
 
