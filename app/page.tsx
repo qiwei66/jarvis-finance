@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { NetWorth } from '@/components/NetWorth'
 import { CashFlow } from '@/components/CashFlow'
 import { Returns } from '@/components/Returns'
