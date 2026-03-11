@@ -7,7 +7,33 @@ export const dynamic = 'force-dynamic'
 // GET /api/portfolio - 获取聚合持仓数据
 export async function GET() {
   try {
-    // 获取最新持仓快照
+    // 临时返回假数据，等Supabase表创建完成
+    console.log('Portfolio API: 使用临时假数据')
+    
+    const mockData = {
+      success: true,
+      data: {
+        aShare: {
+          holdings: [
+            { code: 'sh688215', name: '瀚川智能', market: 'a_share', shares: 2000, market_value: 56600, pnl: 5600, pnl_pct: 10.98 },
+            { code: 'sh600725', name: '云南城投', market: 'a_share', shares: 5000, market_value: 71000, pnl: 7000, pnl_pct: 10.94 }
+          ],
+          summary: { totalValue: 1180000, totalPnL: 85300, holdingsCount: 5 }
+        },
+        usStock: {
+          holdings: [
+            { code: 'GOOGL', name: '谷歌-A', market: 'us_stock', shares: 50, market_value: 7442.5, pnl: 182.5, pnl_pct: 2.51 },
+            { code: 'NVDA', name: '英伟达', market: 'us_stock', shares: 30, market_value: 27604.5, pnl: 1348.5, pnl_pct: 5.13 }
+          ],
+          summary: { totalValue: 850000, totalPnL: 73120, holdingsCount: 5 }
+        },
+        lastUpdated: new Date().toISOString()
+      }
+    }
+    
+    return NextResponse.json(mockData)
+    
+    // 原始代码（暂时注释）
     const { data: portfolioSnapshots, error } = await getSupabase()
       .from('portfolio_snapshots')
       .select('*')
