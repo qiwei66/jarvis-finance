@@ -274,6 +274,19 @@ body {
     font-size: 0.625rem !important;
   }
   
+  /* Mobile Number Formatting - prevent overflow */
+  .headline {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+  
+  /* Mobile Currency Display - responsive scaling */
+  .text-xl {
+    font-size: 1rem !important;
+  }
+  
   /* Mobile Header - stack vertically */
   .header-flex {
     flex-direction: column !important;
@@ -313,6 +326,13 @@ body {
     font-size: 2.2rem !important;
   }
   
+  .headline {
+    font-size: 1.75rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
   main .container {
     padding-left: 16px !important;
     padding-right: 16px !important;
@@ -321,6 +341,12 @@ body {
   .insight,
   .card {
     padding: 14px !important;
+  }
+  
+  /* Very small screen currency formatting */
+  .text-xl {
+    font-size: 0.9rem !important;
+    white-space: nowrap !important;
   }
   
   .display[style*="background"] {
