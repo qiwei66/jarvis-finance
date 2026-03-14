@@ -91,6 +91,62 @@ export async function fetchLiabilities() {
   return data
 }
 
+// 获取持仓详细数据
+export async function fetchPortfolioDetails() {
+  // 先获取最新日期
+  const { data: latestDate } = await getSupabaseAdmin()
+    .from('portfolio_snapshots')
+    .select('date')
+    .order('date', { ascending: false })
+    .limit(1)
+    .single()
+  
+  if (!latestDate) return { aShare: [], usStock: [] }
+  
+  const queryDate = latestDate.date
+
+  const { data: aShareData, error: aShareError } = await getSupabaseAdmin()
+    .from('portfolio_snapshots')
+    .select('*')
+    .eq('market', 'a_share')
+    .eq('date', queryDate)
+    .order('market_value', { ascending: false })
+
+  const { data: usStockData, error: usStockError } = await getSupabaseAdmin()
+    .from('portfolio_snapshots')
+    .select('*')
+    .eq('market', 'us_stock')
+    .eq('date', queryDate)
+    .order('market_value', { ascending: false })
+
+  if (aShareError || usStockError) {
+    console.error('Failed to fetch portfolio details:', aShareError || usStockError)
+    return { aShare: [], usStock: [] }
+  }
+
+  return {
+    aShare: aShareData || [],
+    usStock: usStockData || [],
+    date: queryDate
+  }
+}
+
+// 获取月度现金流历史数据
+export async function fetchCashflowHistory() {
+  const { data, error } = await getSupabaseAdmin()
+    .from('monthly_cashflow')
+    .select('*')
+    .order('month', { ascending: false })
+    .limit(12)
+
+  if (error) {
+    console.error('Failed to fetch cashflow history:', error)
+    return []
+  }
+
+  return data || []
+}
+
 // 获取完整的 Dashboard 数据
 export async function fetchDashboardData() {
   console.log('获取真实 Supabase 数据...')
@@ -102,10 +158,23 @@ export async function fetchDashboardData() {
     fetchLiabilities()
   ])
 
-  // 计算净资产
+  // 计算净资产（如果数据库中net_worth字段有误，使用计算值）
   const totalAssets = netWorth?.total_assets || 0
   const totalLiabilities = netWorth?.total_liabilities || 0
-  const netWorthValue = calculateNetWorth(totalAssets, totalLiabilities)
+  const dbNetWorth = netWorth?.net_worth || 0
+  const calculatedNetWorth = calculateNetWorth(totalAssets, totalLiabilities)
+  
+  // 使用数据库中的net_worth，如果为0则使用计算值
+  const netWorthValue = dbNetWorth > 0 ? dbNetWorth : calculatedNetWorth
+  
+  // 调试信息
+  console.log('Net Worth Debug:', {
+    totalAssets,
+    totalLiabilities,
+    dbNetWorth,
+    calculatedNetWorth,
+    finalNetWorth: netWorthValue
+  })
 
   // 计算杠杆率
   const leverageRatio = calculateLeverageRatio(totalAssets, netWorthValue)
