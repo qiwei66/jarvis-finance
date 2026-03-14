@@ -31,7 +31,7 @@ async function fetchFromFinnhub(symbol: string): Promise<StockData | null> {
     // 使用免费的demo token
     const response = await fetch(
       `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=demo`,
-      { timeout: 5000 }
+      { signal: AbortSignal.timeout(5000) }
     );
     
     if (!response.ok) return null;
@@ -57,7 +57,7 @@ async function fetchFromAlphaVantage(symbol: string): Promise<StockData | null> 
     // 使用demo API key
     const response = await fetch(
       `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=demo`,
-      { timeout: 8000 }
+      { signal: AbortSignal.timeout(8000) }
     );
     
     if (!response.ok) return null;
