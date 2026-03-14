@@ -28,7 +28,7 @@ function StockCard({ stock, isCny = true }: { stock: Stock; isCny?: boolean }) {
           {isCny ? '¥' : '$'}{stock.market_value.toLocaleString()}
         </div>
         <div className={`text-[11px] ${cn(stock.pnl)}`}>
-          {stock.pnl > 0 ? '+' : ''}{prefix}{Math.abs(stock.pnl).toLocaleString()} ({fmtPct(stock.pnl_pct)})
+          {stock.pnl > 0 ? '+' : stock.pnl < 0 ? '-' : ''}{prefix}{Math.abs(stock.pnl).toLocaleString()} ({fmtPct(stock.pnl_pct)})
         </div>
       </div>
     </div>
@@ -68,7 +68,7 @@ export default async function PortfolioPage() {
         <div className="card">
           <div className="text-[10px] text-white/30">美股</div>
           <div className="text-base font-semibold mt-1">${uTotal.toLocaleString()}</div>
-          <div className={`text-[10px] mt-0.5 ${cn(uPnl)}`}>{uPnl > 0 ? '+' : ''}${Math.abs(uPnl).toLocaleString()}</div>
+          <div className={`text-[10px] mt-0.5 ${cn(uPnl)}`}>{uPnl > 0 ? '+' : uPnl < 0 ? '-' : ''}${Math.abs(uPnl).toLocaleString()}</div>
         </div>
         <div className="card">
           <div className="text-[10px] text-white/30">总计</div>

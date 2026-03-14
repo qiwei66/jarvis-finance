@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-import { fetchDashboardData } from '@/lib/data/fetch'
+import { fetchDashboardData, fetchLatestNetWorth } from '@/lib/data/fetch'
 
 function fmt(n: number, unit = '万') {
   if (Math.abs(n) >= 10000) return (n / 10000).toFixed(1) + unit
@@ -17,7 +17,10 @@ function cn(n: number) {
 }
 
 export default async function Home() {
-  const data = await fetchDashboardData()
+  const [data, netWorthRaw] = await Promise.all([
+    fetchDashboardData(),
+    fetchLatestNetWorth()
+  ])
 
   if (!data) {
     return (
@@ -38,11 +41,11 @@ export default async function Home() {
   const expense = cashFlow?.totalExpenses || 0
   const savingsRate = cashFlow?.savingsRate || 0
 
-  // 这些字段需要从Supabase直接获取
-  const aShareValue = returns?.aShareValue || 0
-  const usStockValue = returns?.usStockValue || 0
-  const sersValue = 324000  // SERS 3000股 × ¥108
-  const cashValue = 47182   // 银行存款
+  // 直接从net_worth_daily取（单位：人民币）
+  const aShareValue = netWorthRaw?.a_share_value || 0
+  const usStockValue = netWorthRaw?.us_stock_value || 0  // 已转换为RMB
+  const sersValue = netWorthRaw?.sers_value || 324000
+  const cashValue = netWorthRaw?.cash || 47182
 
   return (
     <div className="space-y-5">
@@ -70,6 +73,7 @@ export default async function Home() {
         <div className="card">
           <div className="text-[10px] text-white/30 uppercase tracking-wider">美股</div>
           <div className="text-lg font-semibold mt-1">¥{fmt(usStockValue)}</div>
+          <div className="text-[10px] text-white/20 mt-0.5">≈${(usStockValue / 7.2).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</div>
         </div>
         <div className="card">
           <div className="text-[10px] text-white/30 uppercase tracking-wider">SERS</div>
@@ -136,7 +140,7 @@ export default async function Home() {
             <div>
               <div className="text-[10px] text-white/30">美股盈亏</div>
               <div className={`text-base font-semibold ${cn(returns.usStockReturn || 0)}`}>
-                {(returns.usStockReturn || 0) > 0 ? '+' : ''}${Math.abs(returns.usStockReturn || 0).toLocaleString()}
+                {(returns.usStockReturn || 0) > 0 ? '+' : '-'}${Math.abs(returns.usStockReturn || 0).toLocaleString()}
               </div>
             </div>
           </div>
