@@ -2,266 +2,142 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { fetchLiabilities } from '@/lib/data/fetch'
-import { formatCurrency, formatPercent } from '@/lib/calc'
 
-interface LiabilityData {
-  id: number
-  name: string
-  type: 'loan' | 'margin' | 'personal'
-  principal: number
-  remaining: number
-  interest_rate: number
-  monthly_payment: number
-  due_date: string
+interface Liability {
+  id: number; name: string; type: 'loan' | 'margin' | 'personal'
+  principal: number; remaining: number; interest_rate: number
+  monthly_payment: number; due_date: string
+}
+
+function fmt(n: number) { return Math.abs(n) >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString() }
+
+const typeMap: Record<string, { label: string; emoji: string }> = {
+  loan: { label: '银行贷款', emoji: '🏦' },
+  margin: { label: '融资融券', emoji: '📈' },
+  personal: { label: '亲属借款', emoji: '👨‍👩‍👦' },
 }
 
 export default async function DebtPage() {
-  const liabilities = await fetchLiabilities() as LiabilityData[]
-  
+  const liabilities = await fetchLiabilities() as Liability[]
+
   if (!liabilities || liabilities.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="title mb-2">负债管理</h1>
-          <p className="subtitle">当前负债状况及还款计划</p>
-        </div>
-
-        <div className="insight p-8 text-center">
-          <h2 className="text-2xl font-medium text-[var(--up)] mb-4">🎉 无负债状态</h2>
-          <p className="body">
-            恭喜！当前没有任何负债记录，财务状况良好。
-            建议继续保持健康的财务习惯，合理规划投资。
-          </p>
-        </div>
+      <div className="py-20 text-center">
+        <div className="text-3xl mb-3">🎉</div>
+        <div className="text-white/60">无负债，财务状况良好</div>
       </div>
     )
   }
 
-  // 按类型分组
-  const groupedLiabilities = {
-    loan: liabilities.filter(item => item.type === 'loan'),
-    margin: liabilities.filter(item => item.type === 'margin'), 
-    personal: liabilities.filter(item => item.type === 'personal')
-  }
-
-  // 计算汇总数据
-  const totalPrincipal = liabilities.reduce((sum, item) => sum + (item.principal || 0), 0)
-  const totalRemaining = liabilities.reduce((sum, item) => sum + (item.remaining || 0), 0)
-  const totalMonthlyPayment = liabilities.reduce((sum, item) => sum + (item.monthly_payment || 0), 0)
-  const avgInterestRate = liabilities.length > 0 
-    ? liabilities.reduce((sum, item) => sum + (item.interest_rate || 0), 0) / liabilities.length 
+  const totalRemaining = liabilities.reduce((s, x) => s + x.remaining, 0)
+  const totalMonthly = liabilities.reduce((s, x) => s + x.monthly_payment, 0)
+  
+  // 加权平均利率（排除0利率的母亲借款）
+  const interestBearing = liabilities.filter(x => x.interest_rate > 0)
+  const weightedRate = interestBearing.length > 0
+    ? interestBearing.reduce((s, x) => s + x.interest_rate * x.remaining, 0) / interestBearing.reduce((s, x) => s + x.remaining, 0)
     : 0
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'loan': return '贷款'
-      case 'margin': return '融资'
-      case 'personal': return '个人借贷'
-      default: return '其他'
-    }
-  }
-
-  const getTypeBadgeClass = (type: string) => {
-    switch (type) {
-      case 'loan': return 'badge-down'
-      case 'margin': return 'badge'
-      case 'personal': return 'badge'
-      default: return 'badge'
-    }
-  }
+  // 分组
+  const groups = [
+    { key: 'margin', items: liabilities.filter(x => x.type === 'margin') },
+    { key: 'loan', items: liabilities.filter(x => x.type === 'loan') },
+    { key: 'personal', items: liabilities.filter(x => x.type === 'personal') },
+  ].filter(g => g.items.length > 0)
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="title mb-2">负债管理</h1>
-        <p className="subtitle">
-          当前负债状况及还款计划，共 {liabilities.length} 项负债
-        </p>
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-lg font-semibold">负债管理</h1>
+        <p className="text-xs text-white/30 mt-1">共{liabilities.length}项负债</p>
       </div>
 
-      {/* 汇总卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      {/* 汇总 */}
+      <div className="grid grid-cols-3 gap-3">
         <div className="card">
-          <div className="overline mb-2">负债总额</div>
-          <div className="display mb-2 text-[var(--down)]">{formatCurrency(totalRemaining)}</div>
-          <div className="body text-[var(--text-3)]">
-            剩余 {liabilities.length} 项
-          </div>
+          <div className="text-[10px] text-white/30">负债总额</div>
+          <div className="text-base font-semibold num-down mt-1">¥{fmt(totalRemaining)}</div>
         </div>
-
         <div className="card">
-          <div className="overline mb-2">原始本金</div>
-          <div className="display mb-2">{formatCurrency(totalPrincipal)}</div>
-          <div className="body text-[var(--text-3)]">
-            已还 {formatCurrency(totalPrincipal - totalRemaining)}
-          </div>
+          <div className="text-[10px] text-white/30">月供合计</div>
+          <div className="text-base font-semibold mt-1">¥{totalMonthly.toLocaleString()}</div>
         </div>
-
         <div className="card">
-          <div className="overline mb-2">月供总额</div>
-          <div className="display mb-2 text-[var(--down)]">{formatCurrency(totalMonthlyPayment)}</div>
-          <div className="body text-[var(--text-3)]">
-            每月固定支出
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="overline mb-2">平均利率</div>
-          <div className="display mb-2">{formatPercent(avgInterestRate, false)}</div>
-          <div className="body text-[var(--text-3)]">
-            年化利率
-          </div>
+          <div className="text-[10px] text-white/30">加权利率</div>
+          <div className="text-base font-semibold mt-1">{weightedRate.toFixed(2)}%</div>
         </div>
       </div>
 
-      {/* 按类型展示负债 */}
-      {Object.entries(groupedLiabilities).map(([type, items]) => {
-        if (items.length === 0) return null
-        
-        return (
-          <section key={type} className="mb-12">
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="subtitle">{getTypeLabel(type)}</h2>
-              <span className="badge">{items.length}项</span>
-            </div>
-            
-            <div className="card p-0">
-              <div className="hidden md:grid grid-cols-7 gap-4 p-4 text-sm font-medium text-[var(--text-3)] border-b border-[var(--border)]">
-                <div>名称</div>
-                <div className="text-right">原始本金</div>
-                <div className="text-right">剩余金额</div>
-                <div className="text-right">利率</div>
-                <div className="text-right">月供</div>
-                <div className="text-right">到期日</div>
-                <div className="text-center">进度</div>
-              </div>
-              
-              <div className="divide-y divide-[var(--border)]">
-                {items.map((liability: LiabilityData, index: number) => {
-                  const repaymentProgress = liability.principal > 0 
-                    ? ((liability.principal - liability.remaining) / liability.principal) * 100 
-                    : 0
-                  const isNearDue = liability.due_date && new Date(liability.due_date) <= new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
-                  
-                  return (
-                    <div key={index} className="md:grid md:grid-cols-7 gap-4 p-4 md:items-center">
-                      {/* 移动端布局 */}
-                      <div className="md:hidden space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-medium text-[var(--text-1)]">{liability.name}</div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className={`badge ${getTypeBadgeClass(liability.type)} text-xs`}>
-                                {getTypeLabel(liability.type)}
-                              </span>
-                              {isNearDue && (
-                                <span className="badge badge-down text-xs">即将到期</span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-medium text-[var(--down)]">{formatCurrency(liability.remaining)}</div>
-                            <div className="text-sm text-[var(--text-3)]">剩余</div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-[var(--text-3)]">还款进度</span>
-                            <span className="font-medium">{repaymentProgress.toFixed(1)}%</span>
-                          </div>
-                          <div className="w-full bg-[var(--border)] rounded-full h-2">
-                            <div 
-                              className="h-2 bg-[var(--up)] rounded-full transition-all duration-1000"
-                              style={{ width: `${repaymentProgress}%` }}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-4 text-sm text-[var(--text-3)]">
-                          <div>月供 {formatCurrency(liability.monthly_payment)}</div>
-                          <div>利率 {formatPercent(liability.interest_rate, false)}</div>
-                          {liability.due_date && (
-                            <div className="col-span-2">
-                              到期 {new Date(liability.due_date).toLocaleDateString('zh-CN')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 桌面端布局 */}
-                      <div className="hidden md:block">
-                        <div className="font-medium text-[var(--text-1)]">{liability.name}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className={`badge ${getTypeBadgeClass(liability.type)} text-xs`}>
-                            {getTypeLabel(liability.type)}
-                          </span>
-                          {isNearDue && (
-                            <span className="badge badge-down text-xs">即将到期</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="hidden md:block text-right body">{formatCurrency(liability.principal)}</div>
-                      <div className="hidden md:block text-right body font-medium text-[var(--down)]">
-                        {formatCurrency(liability.remaining)}
-                      </div>
-                      <div className="hidden md:block text-right body">
-                        {formatPercent(liability.interest_rate, false)}
-                      </div>
-                      <div className="hidden md:block text-right body">
-                        {formatCurrency(liability.monthly_payment)}
-                      </div>
-                      <div className="hidden md:block text-right body">
-                        {liability.due_date 
-                          ? new Date(liability.due_date).toLocaleDateString('zh-CN')
-                          : '-'
-                        }
-                      </div>
-                      <div className="hidden md:block text-center">
-                        <div className="w-full bg-[var(--border)] rounded-full h-2 mb-1">
-                          <div 
-                            className="h-2 bg-[var(--up)] rounded-full transition-all duration-1000"
-                            style={{ width: `${repaymentProgress}%` }}
-                          />
-                        </div>
-                        <div className="text-xs text-[var(--text-3)]">{repaymentProgress.toFixed(1)}%</div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </section>
-        )
-      })}
-
-      {/* 财务分析 */}
-      <section>
-        <h2 className="subtitle mb-4">债务分析</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="insight">
-            <h3 className="body font-medium mb-2">债务健康度</h3>
-            <p className="caption">
-              {avgInterestRate <= 5 ? (
-                `✅ 债务利率较低（平均${avgInterestRate.toFixed(1)}%），债务结构健康。建议保持当前还款计划。`
-              ) : avgInterestRate <= 10 ? (
-                `⚠️ 债务利率中等（平均${avgInterestRate.toFixed(1)}%），建议优先偿还高利率债务。`
-              ) : (
-                `🚨 债务利率较高（平均${avgInterestRate.toFixed(1)}%），建议考虑债务重组或加速还款。`
-              )}
-            </p>
-          </div>
-
-          <div className="insight">
-            <h3 className="body font-medium mb-2">还款建议</h3>
-            <p className="caption">
-              当前月供总额 {formatCurrency(totalMonthlyPayment)}，建议确保月收入至少为月供的3倍以上，
-              保持良好的现金流管理。优先偿还高利率债务以减少利息支出。
-            </p>
-          </div>
+      {/* 负债构成条形图 */}
+      <div className="card">
+        <div className="text-xs text-white/40 mb-3">负债构成</div>
+        <div className="flex h-4 rounded-full overflow-hidden bg-white/[0.04]">
+          {groups.map(g => {
+            const groupTotal = g.items.reduce((s, x) => s + x.remaining, 0)
+            const pct = (groupTotal / totalRemaining) * 100
+            const colors: Record<string, string> = {
+              margin: 'bg-amber-500/60',
+              loan: 'bg-red-400/50',
+              personal: 'bg-blue-400/40',
+            }
+            return (
+              <div key={g.key} className={`${colors[g.key]} transition-all`} style={{ width: `${pct}%` }} />
+            )
+          })}
         </div>
-      </section>
+        <div className="flex items-center gap-4 mt-2 text-[10px] text-white/40">
+          {groups.map(g => {
+            const groupTotal = g.items.reduce((s, x) => s + x.remaining, 0)
+            const pct = ((groupTotal / totalRemaining) * 100).toFixed(0)
+            const dots: Record<string, string> = {
+              margin: 'bg-amber-500/60',
+              loan: 'bg-red-400/50',
+              personal: 'bg-blue-400/40',
+            }
+            return (
+              <span key={g.key} className="flex items-center gap-1">
+                <span className={`w-2 h-2 rounded-full ${dots[g.key]}`} />
+                {typeMap[g.key].label} {pct}%
+              </span>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* 各类负债 */}
+      {groups.map(g => (
+        <div key={g.key} className="card">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm">{typeMap[g.key].emoji}</span>
+            <span className="text-xs font-medium text-white/60">{typeMap[g.key].label}</span>
+            <span className="tag">{g.items.length}项</span>
+          </div>
+          
+          {g.items.sort((a, b) => b.remaining - a.remaining).map((item, i) => (
+            <div key={i} className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm text-white/90">{item.name}</div>
+                <div className="text-[10px] text-white/30 mt-0.5">
+                  {item.interest_rate > 0 ? `${item.interest_rate}%年利率` : '无息'}
+                  {item.monthly_payment > 0 ? ` · 月供¥${item.monthly_payment.toLocaleString()}` : ''}
+                </div>
+              </div>
+              <div className="text-right ml-3 shrink-0">
+                <div className="text-sm font-semibold num-down">¥{fmt(item.remaining)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {/* 风险提示 */}
+      <div className="card bg-amber-500/[0.04] border-amber-500/10">
+        <div className="text-xs text-amber-400/80 space-y-1">
+          <p>⚠️ 融资融券余额¥192万，利率8.35%，年利息约¥16万</p>
+          <p>⚠️ A股总市值¥216万中，融资占比89%，杠杆率极高</p>
+          <p>💡 银行贷款年利率3-4.5%，成本较低，可维持</p>
+        </div>
+      </div>
     </div>
   )
 }

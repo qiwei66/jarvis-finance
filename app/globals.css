@@ -1,380 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #F5F0E8;
-  --bg-1: #F5F0E8;
-  --bg-card: #FEFCF9;
-  --bg-elevated: #FFFFFF;
-  --bg-muted: #EDE8DE;
-  --text-1: #1A1915;
-  --text-2: #6B6560;
-  --text-3: #A39E96;
-  --border: #E5DFD5;
-  --border-strong: #D5CDC2;
-  --accent: #C5714B;
-  --primary: #C5714B;
-  --primary-light: #D4A853;
-  --up: #C4391D;
-  --up-bg: rgba(196,57,29,0.08);
-  --down: #2D8A56;
-  --down-bg: rgba(45,138,86,0.08);
-  --shadow: 0 1px 2px rgba(26,25,21,0.04);
+/* 隐藏滚动条 */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* 导航链接 */
+.nav-link {
+  @apply text-xs font-medium px-3 py-1.5 rounded-md text-white/50 hover:text-white/90 hover:bg-white/[0.06] transition-colors whitespace-nowrap shrink-0;
 }
 
-.dark {
-  --bg: #1A1915;
-  --bg-1: #1A1915;
-  --bg-card: #242320;
-  --bg-elevated: #2E2D29;
-  --bg-muted: #2E2D29;
-  --text-1: #F5F0E8;
-  --text-2: #A39E96;
-  --text-3: #6B6560;
-  --border: #3A3832;
-  --border-strong: #4A4842;
-  --primary: #C5714B;
-  --primary-light: #D4A853;
-  --up-bg: rgba(196,57,29,0.15);
-  --down-bg: rgba(45,138,86,0.15);
-  --shadow: 0 1px 2px rgba(0,0,0,0.2);
+/* 卡片 */
+.card {
+  @apply bg-white/[0.03] border border-white/[0.06] rounded-xl p-4;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* 标签 */
+.tag {
+  @apply text-[10px] font-medium px-1.5 py-0.5 rounded bg-white/[0.06] text-white/40;
+}
+.tag-up {
+  @apply bg-emerald-500/10 text-emerald-400;
+}
+.tag-down {
+  @apply bg-red-500/10 text-red-400;
 }
 
-body {
-  background: var(--bg);
-  color: var(--text-1);
-  font-family: 'Inter', -apple-system, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  transition: background 0.4s ease, color 0.4s ease;
-}
+/* 数字颜色 */
+.num-up { @apply text-emerald-400; }
+.num-down { @apply text-red-400; }
+.num-neutral { @apply text-white/60; }
 
-/* Typography — light, refined, editorial */
-.display {
-  font-size: 5.5rem;
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  line-height: 1;
+/* 进度条 */
+.progress-bar {
+  @apply h-1.5 rounded-full bg-white/[0.06] overflow-hidden;
 }
-
-.dark .display {
-  background: linear-gradient(135deg, #F5F0E8 0%, #D4A853 50%, #F0D68A 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-}
-
-.headline {
-  font-size: 3.25rem;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-.body {
-  font-size: 0.9375rem;
-  color: var(--text-2);
-  line-height: 1.6;
-  font-weight: 400;
-}
-
-.caption {
-  font-size: 0.8125rem;
-  color: var(--text-3);
-  font-weight: 400;
-}
-
-.overline {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text-3);
-}
-
-/* Dividers */
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 48px 0;
-}
-
-.divider-thin {
-  height: 1px;
-  background: var(--border);
-}
-
-/* Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border-radius: 100px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  background: var(--bg-card);
-}
-
-.badge-up {
-  border-color: var(--up);
-  color: var(--up);
-  background: var(--up-bg);
-}
-
-.badge-down {
-  border-color: var(--down);
-  color: var(--down);
-  background: var(--down-bg);
-}
-
-/* Rows */
-.data-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.data-row:last-child {
-  border-bottom: none;
-}
-
-/* Progress */
-.bar {
-  height: 6px;
-  border-radius: 99px;
-  background: var(--bg-muted);
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 99px;
-}
-
-/* Insights */
-.insight {
-  padding: 20px 24px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  transition: all 0.2s;
-}
-
-.insight:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-elevated);
-}
-
-/* Theme toggle */
-.toggle {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-2);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-
-.toggle:hover {
-  border-color: var(--border-strong);
-  color: var(--text-1);
-}
-
-/* Nav */
-.nav-item {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-3);
-  cursor: pointer;
-  padding: 6px 0;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s;
-}
-
-.nav-item:hover {
-  color: var(--text-1);
-}
-
-.nav-item.active {
-  color: var(--text-1);
-  border-bottom-color: var(--text-1);
-}
-
-/* Mobile Responsive Design */
-@media (max-width: 768px) {
-  .display {
-    font-size: 3rem !important;
-    margin: 0 !important;
-  }
-  
-  .headline {
-    font-size: 2rem !important;
-  }
-  
-  .title {
-    font-size: 1.25rem !important;
-  }
-  
-  /* Fix mobile container padding */
-  main .container {
-    padding-left: 20px !important;
-    padding-right: 20px !important;
-  }
-  
-  /* Mobile Grid - force single column */
-  .grid.grid-cols-1.gap-6.lg\\:grid-cols-3 {
-    grid-template-columns: 1fr !important;
-    gap: 16px !important;
-  }
-  
-  /* Mobile Cards - better spacing */
-  .insight,
-  .card {
-    padding: 16px !important;
-    margin-bottom: 16px !important;
-  }
-  
-  /* Mobile Data Row - more compact */
-  .data-row {
-    padding: 14px 0 !important;
-  }
-  
-  /* Mobile Typography - readable sizes */
-  .body {
-    font-size: 0.875rem !important;
-    line-height: 1.5 !important;
-  }
-  
-  .caption {
-    font-size: 0.75rem !important;
-  }
-  
-  .overline {
-    font-size: 0.625rem !important;
-  }
-  
-  /* Mobile Number Formatting - prevent overflow */
-  .headline {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 100% !important;
-  }
-  
-  /* Mobile Currency Display - responsive scaling */
-  .text-xl {
-    font-size: 1rem !important;
-  }
-  
-  /* Mobile Header - stack vertically */
-  .header-flex {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
-  }
-  
-  .user-info {
-    align-self: flex-end !important;
-  }
-  
-  /* Mobile Insights Grid - adjust for small screens */
-  .grid.grid-cols-3.gap-4 {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-  
-  .insight.text-center {
-    padding: 20px 16px !important;
-  }
-  
-  /* Mobile Net Worth Display */
-  .display[style*="background"] {
-    font-size: 2.5rem !important;
-    line-height: 1.1 !important;
-  }
-  
-  /* Mobile Bar Charts */
-  .bar {
-    height: 4px !important;
-  }
-}
-
-/* Extra small screens */
-@media (max-width: 480px) {
-  .display {
-    font-size: 2.2rem !important;
-  }
-  
-  .headline {
-    font-size: 1.75rem !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-  
-  main .container {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-  }
-  
-  .insight,
-  .card {
-    padding: 14px !important;
-  }
-  
-  /* Very small screen currency formatting */
-  .text-xl {
-    font-size: 0.9rem !important;
-    white-space: nowrap !important;
-  }
-  
-  .display[style*="background"] {
-    font-size: 2rem !important;
-  }
-  
-  /* Very small insight cards */
-  .insight.text-center {
-    padding: 16px 12px !important;
-  }
-  
-  .headline {
-    font-size: 1.75rem !important;
-  }
-}
-
-/* Fix specific layout issues */
-@media (max-width: 768px) {
-  /* Ensure full width on mobile */
-  .min-h-screen {
-    width: 100vw !important;
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-  }
-  
-  /* Fix header spacing */
-  .sticky.top-0 {
-    position: sticky !important;
-    top: 0 !important;
-  }
+.progress-fill {
+  @apply h-full rounded-full transition-all duration-700;
 }
