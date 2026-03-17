@@ -30,6 +30,9 @@ export async function GET(request: Request) {
     const today = new Date().toISOString().split('T')[0]
     const updateResults = []
     
+    // 先确保今天的行存在：如果不存在，从最新日期复制
+    await ensureTodayRows(today)
+    
     // 更新每只股票的实时数据
     for (const stock of stockData) {
       const market = stock.code.startsWith('gb_') ? 'us_stock' : 'a_share'
@@ -97,6 +100,70 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Stock sync API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// 确保今天的portfolio_snapshots行存在，不存在则从最新日期复制
+async function ensureTodayRows(today: string) {
+  const supabase = getSupabaseAdmin()
+  
+  // 检查今天是否已有数据
+  const { data: todayRows } = await supabase
+    .from('portfolio_snapshots')
+    .select('id')
+    .eq('date', today)
+    .limit(1)
+  
+  if (todayRows && todayRows.length > 0) {
+    console.log(`[sync-stock] 今天(${today})的行已存在，跳过创建`)
+    return
+  }
+  
+  // 找到最新一天的日期
+  const { data: latestRow } = await supabase
+    .from('portfolio_snapshots')
+    .select('date')
+    .order('date', { ascending: false })
+    .limit(1)
+    .single()
+  
+  if (!latestRow) {
+    console.log('[sync-stock] 没有历史数据，无法创建新行')
+    return
+  }
+  
+  const latestDate = latestRow.date
+  console.log(`[sync-stock] 今天(${today})无数据，从 ${latestDate} 复制...`)
+  
+  // 获取最新日期的所有行
+  const { data: latestRows } = await supabase
+    .from('portfolio_snapshots')
+    .select('*')
+    .eq('date', latestDate)
+  
+  if (!latestRows || latestRows.length === 0) {
+    console.log(`[sync-stock] ${latestDate} 无数据`)
+    return
+  }
+  
+  // 复制每一行，更新日期，去掉id让数据库自增
+  const newRows = latestRows.map(row => {
+    const { id, ...rest } = row
+    return {
+      ...rest,
+      date: today,
+      updated_at: new Date().toISOString()
+    }
+  })
+  
+  const { error } = await supabase
+    .from('portfolio_snapshots')
+    .insert(newRows)
+  
+  if (error) {
+    console.error('[sync-stock] 创建新行失败:', error)
+  } else {
+    console.log(`[sync-stock] 成功创建 ${newRows.length} 行 (${today})`)
   }
 }
 

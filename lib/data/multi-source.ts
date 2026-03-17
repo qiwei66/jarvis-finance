@@ -78,9 +78,91 @@ async function fetchFromAlphaVantage(symbol: string): Promise<StockData | null> 
   }
 }
 
+// A股名称映射（新浪API返回GBK编码名称，这里做备用）
+const A_SHARE_NAMES: Record<string, string> = {
+  'sh688215': '瑞晟智能',
+  'sh600725': '云维股份',
+  'sz001335': '信凯科技',
+  'sz002837': '英维克',
+  'sz300442': '润泽科技',
+}
+
+// 新浪财经实时行情API（免费，无需key）
+async function fetchFromSina(codes: string[]): Promise<Map<string, StockData>> {
+  const results = new Map<string, StockData>()
+  
+  // 过滤出A股代码（sh/sz开头）
+  const aCodes = codes.filter(c => c.startsWith('sh') || c.startsWith('sz'))
+  if (aCodes.length === 0) return results
+  
+  try {
+    const sinaList = aCodes.join(',')
+    console.log(`[新浪API] 请求: ${sinaList}`)
+    
+    const response = await fetch(`https://hq.sinajs.cn/list=${sinaList}`, {
+      headers: {
+        'Referer': 'https://finance.sina.com.cn',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+      },
+      signal: AbortSignal.timeout(8000),
+    })
+    
+    if (!response.ok) {
+      console.log(`[新浪API] HTTP ${response.status}`)
+      return results
+    }
+    
+    // 新浪API返回GBK编码，Node.js fetch默认UTF-8，需要处理
+    const buffer = await response.arrayBuffer()
+    let text: string
+    try {
+      const decoder = new TextDecoder('gbk')
+      text = decoder.decode(buffer)
+    } catch {
+      // fallback to utf-8
+      text = new TextDecoder('utf-8').decode(buffer)
+    }
+    
+    // 解析每一行: var hq_str_sh600519="贵州茅台,今开,昨收,当前价,最高,最低,..."
+    const lines = text.split('\n').filter(l => l.trim())
+    for (const line of lines) {
+      const match = line.match(/var hq_str_(\w+)="(.+)"/)
+      if (!match) continue
+      
+      const sinaCode = match[1] // e.g. sh600519
+      const fields = match[2].split(',')
+      
+      if (fields.length < 4 || !fields[3]) continue
+      
+      const name = fields[0]
+      const prevClose = parseFloat(fields[2])
+      const currentPrice = parseFloat(fields[3])
+      
+      if (isNaN(currentPrice) || currentPrice === 0) continue
+      
+      const change = prevClose > 0 ? currentPrice - prevClose : 0
+      const changePct = prevClose > 0 ? (change / prevClose) * 100 : 0
+      
+      results.set(sinaCode, {
+        code: sinaCode,
+        name: name || A_SHARE_NAMES[sinaCode] || sinaCode,
+        currentPrice,
+        change,
+        changePct,
+      })
+      
+      console.log(`[新浪API] ✓ ${name}: ¥${currentPrice} (${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%)`)
+    }
+  } catch (err) {
+    console.error('[新浪API] 请求失败:', err)
+  }
+  
+  return results
+}
+
 // 兜底数据（基于最后已知价格和市场趋势估算）
 function getEstimatedPrice(code: string): StockData | null {
-  const estimates = {
+  const estimates: Record<string, { price: number; change: number; name: string }> = {
     'sh688215': { price: 82.1, change: -3.1, name: '瑞晟智能' },
     'sh600725': { price: 4.70, change: -0.15, name: '云维股份' },
     'sz001335': { price: 51.5, change: -1.3, name: '信凯科技' },
@@ -94,7 +176,7 @@ function getEstimatedPrice(code: string): StockData | null {
     'gb_nvda': { price: 475.8, change: -9.8, name: 'NVDA' }
   };
   
-  const est = estimates[code as keyof typeof estimates];
+  const est = estimates[code];
   if (!est) return null;
   
   return {
@@ -107,12 +189,16 @@ function getEstimatedPrice(code: string): StockData | null {
 }
 
 // 获取单只股票数据（多源fallback）
-async function fetchStockWithFallback(code: string): Promise<StockData | null> {
+async function fetchStockWithFallback(code: string, sinaCache?: Map<string, StockData>): Promise<StockData | null> {
   console.log(`获取 ${code} 股价...`);
   
-  // 对于A股，直接使用估算价格（API限制太多）
+  // A股：优先从新浪缓存取，fallback到估算
   if (!code.startsWith('gb_')) {
-    console.log(`${code}: 使用估算价格 (A股)`);
+    if (sinaCache?.has(code)) {
+      console.log(`${code}: 新浪API 成功`);
+      return sinaCache.get(code)!;
+    }
+    console.log(`${code}: 使用估算价格 (A股, 新浪无数据)`);
     return getEstimatedPrice(code);
   }
   
@@ -153,15 +239,23 @@ export async function fetchAllHoldings(): Promise<StockData[]> {
   
   console.log('开始获取股价数据 (多源策略)...');
   
+  // 先批量获取A股数据（新浪API支持批量）
+  const aCodes = codes.filter(c => c.startsWith('sh') || c.startsWith('sz'));
+  const sinaCache = await fetchFromSina(aCodes);
+  console.log(`[新浪API] 批量获取 ${sinaCache.size}/${aCodes.length} 只A股`);
+  
   for (const code of codes) {
-    const data = await fetchStockWithFallback(code);
+    const data = await fetchStockWithFallback(code, sinaCache);
     if (data) {
       results.push(data);
-      console.log(`✓ ${data.name}: $${data.currentPrice} (${data.changePct.toFixed(2)}%)`);
+      const currency = code.startsWith('gb_') ? '$' : '¥';
+      console.log(`✓ ${data.name}: ${currency}${data.currentPrice} (${data.changePct.toFixed(2)}%)`);
     }
     
-    // 避免API限流
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // 美股API需要限流，A股已通过新浪批量获取
+    if (code.startsWith('gb_')) {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
   }
   
   console.log(`获取完成: ${results.length}/${codes.length} 只股票`);
@@ -169,5 +263,10 @@ export async function fetchAllHoldings(): Promise<StockData[]> {
 }
 
 export async function fetchStockByCode(code: string): Promise<StockData | null> {
+  // 单只A股也走新浪API
+  if (code.startsWith('sh') || code.startsWith('sz')) {
+    const sinaCache = await fetchFromSina([code]);
+    return fetchStockWithFallback(code, sinaCache);
+  }
   return fetchStockWithFallback(code);
 }
