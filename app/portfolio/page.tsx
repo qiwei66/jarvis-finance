@@ -1,105 +1,210 @@
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-import { fetchPortfolioDetails } from '@/lib/data/fetch'
+import { getSupabaseAdmin } from '@/lib/supabase'
+import { formatCurrency, getPnLTextClass } from '@/lib/calc'
 
-interface Stock {
-  id: number; date: string; market: 'a_share' | 'us_stock'; code: string; name: string
-  shares: number; cost_price: number; market_price: number; market_value: number
-  pnl: number; pnl_pct: number
-}
-
-function cn(n: number) { return n > 0 ? 'num-up' : n < 0 ? 'num-down' : 'num-neutral' }
-function fmt(n: number) { return Math.abs(n) >= 10000 ? (n / 10000).toFixed(1) + '万' : n.toLocaleString() }
-function fmtPct(n: number) { return (n > 0 ? '+' : '') + n.toFixed(2) + '%' }
-
-function StockCard({ stock, isCny = true }: { stock: Stock; isCny?: boolean }) {
-  const prefix = isCny ? '¥' : '$'
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-white/[0.04] last:border-0">
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium text-white/90 truncate">{stock.name}</div>
-        <div className="text-[10px] text-white/30 mt-0.5">
-          {stock.code} · {stock.shares.toLocaleString()}股 · 成本{prefix}{stock.cost_price.toFixed(2)}
-        </div>
-      </div>
-      <div className="text-right ml-3 shrink-0">
-        <div className="text-sm font-semibold text-white/90">
-          {isCny ? '¥' : '$'}{stock.market_value.toLocaleString()}
-        </div>
-        <div className={`text-[11px] ${cn(stock.pnl)}`}>
-          {stock.pnl > 0 ? '+' : stock.pnl < 0 ? '-' : ''}{prefix}{Math.abs(stock.pnl).toLocaleString()} ({fmtPct(stock.pnl_pct)})
-        </div>
-      </div>
-    </div>
-  )
+async function fetchPortfolioData() {
+  const supabase = getSupabaseAdmin()
+  
+  // 获取最新日期
+  const { data: latestDate } = await supabase
+    .from('portfolio_snapshots')
+    .select('date')
+    .order('date', { ascending: false })
+    .limit(1)
+    .single()
+  
+  const queryDate = latestDate?.date || new Date().toISOString().split('T')[0]
+  
+  const { data: holdings, error } = await supabase
+    .from('portfolio_snapshots')
+    .select('*')
+    .eq('date', queryDate)
+    .order('market_value', { ascending: false })
+  
+  if (error) {
+    console.error('Failed to fetch portfolio:', error)
+    return { holdings: [], date: queryDate }
+  }
+  
+  return { holdings: holdings || [], date: queryDate }
 }
 
 export default async function PortfolioPage() {
-  const data = await fetchPortfolioDetails()
+  const { holdings, date } = await fetchPortfolioData()
   
-  if (!data) {
-    return <div className="py-20 text-center text-white/40">加载持仓数据中...</div>
-  }
-
-  const { aShare, usStock, date } = data
-
-  const aTotal = aShare.reduce((s: number, x: Stock) => s + x.market_value, 0)
-  const aPnl = aShare.reduce((s: number, x: Stock) => s + x.pnl, 0)
-  const uTotal = usStock.reduce((s: number, x: Stock) => s + x.market_value, 0)
-  const uPnl = usStock.reduce((s: number, x: Stock) => s + x.pnl, 0)
+  const aShareHoldings = holdings.filter(h => h.market === 'a_share')
+  const usStockHoldings = holdings.filter(h => h.market === 'us_stock')
+  
+  const aShareTotal = aShareHoldings.reduce((sum, h) => sum + (h.market_value || 0), 0)
+  const aSharePnL = aShareHoldings.reduce((sum, h) => sum + (h.pnl || 0), 0)
+  const usStockTotal = usStockHoldings.reduce((sum, h) => sum + (h.market_value || 0), 0)
+  const usStockPnL = usStockHoldings.reduce((sum, h) => sum + (h.pnl || 0), 0)
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-lg font-semibold">持仓详情</h1>
-        <p className="text-xs text-white/30 mt-1">
-          截至 {new Date(date).toLocaleDateString('zh-CN')}
+    <div>
+      <div className="mb-8">
+        <h2 className="mb-2 text-sm font-medium uppercase tracking-wider text-[var(--text-3)]">
+          Portfolio
+        </h2>
+        <p className="text-[var(--text-2)]">
+          持仓明细 · 数据日期 {date}
         </p>
       </div>
 
-      {/* 汇总 */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="card">
-          <div className="text-[10px] text-white/30">A股</div>
-          <div className="text-base font-semibold mt-1">¥{fmt(aTotal)}</div>
-          <div className={`text-[10px] mt-0.5 ${cn(aPnl)}`}>{aPnl > 0 ? '+' : ''}¥{fmt(aPnl)}</div>
+      {holdings.length === 0 ? (
+        <div className="card text-center py-12">
+          <p className="text-[var(--text-2)]">暂无持仓数据</p>
         </div>
-        <div className="card">
-          <div className="text-[10px] text-white/30">美股</div>
-          <div className="text-base font-semibold mt-1">${uTotal.toLocaleString()}</div>
-          <div className={`text-[10px] mt-0.5 ${cn(uPnl)}`}>{uPnl > 0 ? '+' : uPnl < 0 ? '-' : ''}${Math.abs(uPnl).toLocaleString()}</div>
-        </div>
-        <div className="card">
-          <div className="text-[10px] text-white/30">总计</div>
-          <div className="text-base font-semibold mt-1">{aShare.length + usStock.length}只</div>
-          <div className="text-[10px] text-white/30 mt-0.5">{aShare.length}A + {usStock.length}美</div>
-        </div>
-      </div>
+      ) : (
+        <div className="space-y-6">
+          {/* A股持仓 */}
+          {aShareHoldings.length > 0 && (
+            <section className="card">
+              <div className="flex items-center justify-between mb-4">
+                <span className="overline">A 股持仓</span>
+                <div className="flex gap-2">
+                  <span className="badge">
+                    市值 {formatCurrency(aShareTotal)}
+                  </span>
+                  <span className={`badge ${aSharePnL >= 0 ? 'badge-up' : 'badge-down'}`}>
+                    {aSharePnL >= 0 ? '+' : ''}{formatCurrency(aSharePnL)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* 表头 */}
+              <div className="hidden sm:grid grid-cols-6 gap-2 px-2 py-2 text-xs text-[var(--text-3)] font-medium uppercase tracking-wider border-b border-[var(--border)]">
+                <div>股票</div>
+                <div className="text-right">持股</div>
+                <div className="text-right">成本</div>
+                <div className="text-right">现价</div>
+                <div className="text-right">市值</div>
+                <div className="text-right">盈亏</div>
+              </div>
+              
+              {aShareHoldings.map((h, i) => (
+                <div key={i} className="grid grid-cols-2 sm:grid-cols-6 gap-2 px-2 py-3 border-b border-[var(--border)] last:border-b-0 items-center">
+                  <div>
+                    <div className="text-sm font-medium text-[var(--text-1)]">{h.name}</div>
+                    <div className="text-xs text-[var(--text-3)]">{h.code}</div>
+                  </div>
+                  <div className="text-right sm:text-right text-sm text-[var(--text-2)]">
+                    {(h.shares || 0).toLocaleString()}股
+                  </div>
+                  <div className="text-right text-sm text-[var(--text-2)] hidden sm:block">
+                    ¥{(h.cost_price || 0).toFixed(2)}
+                  </div>
+                  <div className="text-right text-sm text-[var(--text-1)] hidden sm:block">
+                    ¥{(h.market_price || 0).toFixed(2)}
+                  </div>
+                  <div className="text-right text-sm font-medium text-[var(--text-1)] hidden sm:block">
+                    {formatCurrency(h.market_value || 0)}
+                  </div>
+                  <div className={`text-right text-sm font-medium hidden sm:block ${getPnLTextClass(h.pnl || 0)}`}>
+                    {(h.pnl || 0) >= 0 ? '+' : ''}{formatCurrency(h.pnl || 0)}
+                    <div className="text-xs">
+                      {(h.pnl_pct || 0) >= 0 ? '+' : ''}{(h.pnl_pct || 0).toFixed(2)}%
+                    </div>
+                  </div>
+                  {/* Mobile-only: show value and PnL */}
+                  <div className="col-span-2 sm:hidden flex justify-between mt-1">
+                    <span className="text-xs text-[var(--text-3)]">
+                      成本 ¥{(h.cost_price || 0).toFixed(2)} → 现价 ¥{(h.market_price || 0).toFixed(2)}
+                    </span>
+                    <span className={`text-xs font-medium ${getPnLTextClass(h.pnl || 0)}`}>
+                      {(h.pnl || 0) >= 0 ? '+' : ''}{formatCurrency(h.pnl || 0)} ({(h.pnl_pct || 0).toFixed(2)}%)
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
 
-      {/* A股 */}
-      {aShare.length > 0 && (
-        <div className="card">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-medium text-white/60">A股持仓</span>
-            <span className="tag">{aShare.length}只</span>
-          </div>
-          {(aShare as Stock[]).sort((a, b) => b.market_value - a.market_value).map((stock: Stock) => (
-            <StockCard key={stock.code} stock={stock} isCny={true} />
-          ))}
-        </div>
-      )}
+          {/* 美股持仓 */}
+          {usStockHoldings.length > 0 && (
+            <section className="card">
+              <div className="flex items-center justify-between mb-4">
+                <span className="overline">美股持仓</span>
+                <div className="flex gap-2">
+                  <span className="badge">
+                    市值 ${usStockTotal.toLocaleString()}
+                  </span>
+                  <span className={`badge ${usStockPnL >= 0 ? 'badge-up' : 'badge-down'}`}>
+                    {usStockPnL >= 0 ? '+' : ''}${usStockPnL.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              
+              {/* 表头 */}
+              <div className="hidden sm:grid grid-cols-6 gap-2 px-2 py-2 text-xs text-[var(--text-3)] font-medium uppercase tracking-wider border-b border-[var(--border)]">
+                <div>股票</div>
+                <div className="text-right">持股</div>
+                <div className="text-right">成本</div>
+                <div className="text-right">现价</div>
+                <div className="text-right">市值</div>
+                <div className="text-right">盈亏</div>
+              </div>
+              
+              {usStockHoldings.map((h, i) => (
+                <div key={i} className="grid grid-cols-2 sm:grid-cols-6 gap-2 px-2 py-3 border-b border-[var(--border)] last:border-b-0 items-center">
+                  <div>
+                    <div className="text-sm font-medium text-[var(--text-1)]">{h.name}</div>
+                    <div className="text-xs text-[var(--text-3)]">{h.code}</div>
+                  </div>
+                  <div className="text-right text-sm text-[var(--text-2)]">
+                    {(h.shares || 0).toLocaleString()}股
+                  </div>
+                  <div className="text-right text-sm text-[var(--text-2)] hidden sm:block">
+                    ${(h.cost_price || 0).toFixed(2)}
+                  </div>
+                  <div className="text-right text-sm text-[var(--text-1)] hidden sm:block">
+                    ${(h.market_price || 0).toFixed(2)}
+                  </div>
+                  <div className="text-right text-sm font-medium text-[var(--text-1)] hidden sm:block">
+                    ${(h.market_value || 0).toLocaleString()}
+                  </div>
+                  <div className={`text-right text-sm font-medium hidden sm:block ${getPnLTextClass(h.pnl || 0)}`}>
+                    {(h.pnl || 0) >= 0 ? '+' : ''}${(h.pnl || 0).toLocaleString()}
+                    <div className="text-xs">
+                      {(h.pnl_pct || 0) >= 0 ? '+' : ''}{(h.pnl_pct || 0).toFixed(2)}%
+                    </div>
+                  </div>
+                  {/* Mobile */}
+                  <div className="col-span-2 sm:hidden flex justify-between mt-1">
+                    <span className="text-xs text-[var(--text-3)]">
+                      成本 ${(h.cost_price || 0).toFixed(2)} → 现价 ${(h.market_price || 0).toFixed(2)}
+                    </span>
+                    <span className={`text-xs font-medium ${getPnLTextClass(h.pnl || 0)}`}>
+                      {(h.pnl || 0) >= 0 ? '+' : ''}${(h.pnl || 0).toLocaleString()} ({(h.pnl_pct || 0).toFixed(2)}%)
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
 
-      {/* 美股 */}
-      {usStock.length > 0 && (
-        <div className="card">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-medium text-white/60">美股持仓</span>
-            <span className="tag">{usStock.length}只</span>
-          </div>
-          {(usStock as Stock[]).sort((a, b) => b.market_value - a.market_value).map((stock: Stock) => (
-            <StockCard key={stock.code} stock={stock} isCny={false} />
-          ))}
+          {/* 汇总 */}
+          <section className="card">
+            <span className="overline">持仓汇总</span>
+            <div className="mt-4 space-y-0">
+              <div className="data-row">
+                <span className="body">A股总市值</span>
+                <span className="text-lg font-medium text-[var(--text-1)]">{formatCurrency(aShareTotal)}</span>
+              </div>
+              <div className="data-row">
+                <span className="body">美股总市值</span>
+                <span className="text-lg font-medium text-[var(--text-1)]">${usStockTotal.toLocaleString()}</span>
+              </div>
+              <div className="data-row">
+                <span className="body">总盈亏</span>
+                <span className={`text-lg font-medium ${getPnLTextClass(aSharePnL + usStockPnL)}`}>
+                  {(aSharePnL + usStockPnL) >= 0 ? '+' : ''}{formatCurrency(aSharePnL + usStockPnL)}
+                </span>
+              </div>
+            </div>
+          </section>
         </div>
       )}
     </div>

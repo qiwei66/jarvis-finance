@@ -208,7 +208,7 @@ export async function fetchDashboardData() {
     {
       id: 'returns',
       title: '持仓收益',
-      value: totalReturn > 0 ? '+' : '' + totalReturn.toLocaleString('zh-CN'),
+      value: (totalReturn > 0 ? '+' : '') + totalReturn.toLocaleString('zh-CN'),
       description: totalReturn > 0 ? '盈利中' : '浮亏',
       trend: totalReturn > 0 ? 'up' : 'down',
       type: (totalReturn > 0 ? 'success' : 'warning') as 'warning' | 'opportunity' | 'success' | 'neutral'

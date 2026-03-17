@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-03-16T09:03:41.045383",
+  "stats": {
+    "total": 510,
+    "processed": 0,
+    "deleted": 0,
+    "archived": 0,
+    "labeled": 0,
+    "skipped": 510,
+    "errors": 0
+  },
+  "rules_applied": [
+    "verification",
+    "promotion",
+    "tech_notification",
+    "financial",
+    "social"
+  ]
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import { fetchAllHoldings } from '@/lib/data/multi-source'
 
 // 验证 cron 密钥（从环境变量读取）
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       const market = stock.code.startsWith('gb_') ? 'us_stock' : 'a_share'
       
       // 获取当前持仓信息
-      const { data: existingHolding } = await getSupabase()
+      const { data: existingHolding } = await getSupabaseAdmin()
         .from('portfolio_snapshots')
         .select('*')
         .eq('date', today)
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
         const pnlPct = costPrice > 0 ? (pnl / (shares * costPrice)) * 100 : 0
         
         // 更新持仓数据
-        const { error } = await getSupabase()
+        const { error } = await getSupabaseAdmin()
           .from('portfolio_snapshots')
           .update({
             market_price: stock.currentPrice,
@@ -102,7 +102,7 @@ export async function GET(request: Request) {
 
 async function updateNetWorth(date: string) {
   try {
-    const { data: portfolioData } = await getSupabase()
+    const { data: portfolioData } = await getSupabaseAdmin()
       .from('portfolio_snapshots')
       .select('market, market_value')
       .eq('date', date)
@@ -118,14 +118,14 @@ async function updateNetWorth(date: string) {
       .reduce((sum, h) => sum + (h.market_value || 0), 0)
     
     // 获取负债数据
-    const { data: liabilitiesData } = await getSupabase()
+    const { data: liabilitiesData } = await getSupabaseAdmin()
       .from('liabilities')
       .select('remaining')
     
     const totalLiabilities = liabilitiesData?.reduce((sum, l) => sum + (l.remaining || 0), 0) || 1920000
     
     // 其他资产
-    const { data: existingNetWorth } = await getSupabase()
+    const { data: existingNetWorth } = await getSupabaseAdmin()
       .from('net_worth_daily')
       .select('*')
       .eq('date', date)
@@ -142,7 +142,7 @@ async function updateNetWorth(date: string) {
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayStr = yesterday.toISOString().split('T')[0]
     
-    const { data: yesterdayNetWorth } = await getSupabase()
+    const { data: yesterdayNetWorth } = await getSupabaseAdmin()
       .from('net_worth_daily')
       .select('net_worth')
       .eq('date', yesterdayStr)
@@ -153,7 +153,7 @@ async function updateNetWorth(date: string) {
     const monthlyChangePct = yesterdayValue > 0 ? (monthlyChange / yesterdayValue) * 100 : 0
     
     // 更新净资产记录
-    await getSupabase()
+    await getSupabaseAdmin()
       .from('net_worth_daily')
       .upsert({
         date,

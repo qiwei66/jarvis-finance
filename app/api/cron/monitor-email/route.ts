@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 
 // 简单的邮箱监控API
 // 实际部署时应该用后台worker，这里只是示例
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     }
     
     // 记录到Supabase（可选）
-    const { error: logError } = await getSupabase()
+    const { error: logError } = await getSupabaseAdmin()
       .from('system_logs')
       .insert({
         type: 'email_monitor', 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getSupabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const month = searchParams.get('month') // 格式: YYYY-MM
     
-    let query = getSupabase().from('monthly_cashflow').select('*')
+    let query = getSupabaseAdmin().from('monthly_cashflow').select('*')
     
     if (month) {
       // 查询特定月份
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     const savingsRate = income > 0 ? (savings / income) * 100 : 0
 
     // 插入或更新数据
-    const { data, error } = await getSupabase()
+    const { data, error } = await getSupabaseAdmin()
       .from('monthly_cashflow')
       .upsert({
         month,
@@ -117,7 +117,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Month parameter required' }, { status: 400 })
     }
 
-    const { error } = await getSupabase()
+    const { error } = await getSupabaseAdmin()
       .from('monthly_cashflow')
       .delete()
       .eq('month', month)
